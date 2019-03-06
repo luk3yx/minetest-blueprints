@@ -118,14 +118,19 @@ local function get_inv_lists(rules)
 end
 
 -- Get a blueprint string for a node.
-blueprints.get_blueprint = function(pos, raw)
+blueprints.get_blueprint = function(pos, raw, force)
     -- Check aliases
     local node  = minetest.get_node(pos)
     node.name   = blueprints.check_alias(node.name)
 
     -- Get the rules list
+    local rules
     local rules = blueprints.get_rules(node)
-    if not rules.allowed then return end
+    if force then
+        rules.meta = true
+    elseif not rules.allowed then
+        return
+    end
 
     -- Using a meta table allows ints/floats/etc to be copied nicely.
     local blueprint = {name = node.name, pattern = rules.pattern}
@@ -144,7 +149,8 @@ blueprints.get_blueprint = function(pos, raw)
     end
 
     -- Get a nicer inv_lists
-    local inv_lists = get_inv_lists(rules)
+    local inv_lists
+    if not force then inv_lists = get_inv_lists(rules) end
 
     -- Copy allowed inventories
     if metatable.inventory then
@@ -152,7 +158,7 @@ blueprints.get_blueprint = function(pos, raw)
         for listname, list in pairs(metatable.inventory) do
             blueprint.inv[listname] = {}
             for id, itemstack in ipairs(list) do
-                if inv_lists[listname] then
+                if force or inv_lists[listname] then
                     blueprint.inv[listname][id] = itemstack:to_table() or ''
                 else
                     blueprint.inv[listname][id] = ''
@@ -174,7 +180,7 @@ blueprints.get_blueprint = function(pos, raw)
 end
 
 -- Apply blueprints (and double-check the allowed fields)
-blueprints.apply_blueprint = function(pos, blueprint, only_if_exists)
+blueprints.apply_blueprint = function(pos, blueprint, only_if_exists, force)
     -- Deserialize if required and get the rules
     if type(blueprint) == 'string' then
         blueprint = minetest.deserialize(blueprint)
@@ -196,7 +202,7 @@ blueprints.apply_blueprint = function(pos, blueprint, only_if_exists)
 
     -- Get the rules
     local rules = blueprints.get_rules(blueprint)
-    if not rules or not rules.allowed then return end
+    if not rules or (not rules.allowed and not force) then return end
 
     -- Set the node (and param2)
     local node = {name = blueprint.name}
@@ -208,7 +214,7 @@ blueprints.apply_blueprint = function(pos, blueprint, only_if_exists)
 
     -- Copy across allowed metadata fields
     if blueprint.meta and rules.meta then
-        if rules.meta == true then
+        if rules.meta == true or force then
             metatable.fields = blueprint.meta
         else
             for _, name in ipairs(rules.meta) do
@@ -219,12 +225,13 @@ blueprints.apply_blueprint = function(pos, blueprint, only_if_exists)
 
     -- Copy allowed inventories
     if blueprint.inv then
-        local inv_lists = get_inv_lists(rules)
+        local inv_lists
+        if not force then inv_lists = get_inv_lists(rules) end
 
         for name, inv in pairs(blueprint.inv) do
             metatable.inventory[name] = {}
             for id, item in ipairs(inv) do
-                if not inv_lists[name] then item = '' end
+                if not force and not inv_lists[name] then item = '' end
                 metatable.inventory[name][id] = ItemStack(item)
             end
         end

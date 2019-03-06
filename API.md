@@ -53,12 +53,15 @@ The following API functions exist, where the `node` parameter is normally a
 
 ### Creating/applying blueprint strings/tables.
 
- - `blueprints.get_blueprint(pos, raw = false)`: Returns a blueprint string
-    (or table if raw is true) for the object. If the node cannot be blueprinted,
-    this will return `nil`.
- - `blueprints.apply_blueprint(pos, blueprint, only_if_exists = false)`: Applies
-    the blueprint `blueprint` at `pos`, the blueprint specified may be a string
-    or table. Returns `true` on success or `nil` on faliure.
+ - `blueprints.get_blueprint(pos, raw = false, force = false)`: Returns a
+    blueprint string (or table if raw is true) for the object. If the node
+    cannot be blueprinted, this will return `nil`. If `force` is `true`, the
+    rules will be ignored and the entire node will be blueprinted.
+ - `blueprints.apply_blueprint(pos, blueprint, only_if_exists = false, force = false)`:
+    Applies the blueprint `blueprint` at `pos`, the blueprint specified may be
+    a string or table. Returns `true` on success or `nil` on faliure. If `force`
+    is `true`, the rules will be ignored when applying the blueprint. This must
+    also have been `true` when `get_blueprint` was called.
 
 ### Other possibly useful function(s).
  - `blueprints.check_protection(pos, name)`: Checks the protection at `pos` for
