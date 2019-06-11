@@ -1,7 +1,7 @@
-<center>
+<div align="center">
 <h1>Minetest blueprints mod</h1>
-<img src="blueprint-types.png" alt=" " />
-</center>
+<img src="./blueprint-types.png" alt=" " />
+</div>
 
 A Minetest mod that allows items to be copied.
 
